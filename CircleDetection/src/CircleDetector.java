@@ -1,4 +1,6 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.io.IOException;
 
 import javax.swing.ImageIcon;
@@ -37,16 +39,17 @@ public class CircleDetector {
 			System.err.println("Couldn't read file");
 		}
 		
-		EdgeDetector e = new EdgeDetector(150);
+		EdgeDetector e = new EdgeDetector(350);
 		CircleDetector c = new CircleDetector();
 		double[][] sobelArray = e.getSobelFilteredArray(gs.getBufferedImage());
 		houghArray = c.getHoughArray(sobelArray);
-		for (int i = 0; i < c.highestValue[3]; i++) {
-			sobelArray[(int) c.highestValue[1] + i][(int) c.highestValue[2] + i] = sobelArray[(int) c.highestValue[1] + i][(int) c.highestValue[2] + i] * 10000000;
-		}
 		GSImage gsout = new GSImage(e.getSobelFilteredArray(gs.getBufferedImage()),100);
-		
-		ImageIcon img = new ImageIcon(gsout.getBufferedImage());
+		Graphics g = gs.getOriginalImage().getGraphics();
+		g.setColor(Color.BLUE);
+		g.drawOval((int) c.highestValue[1] - (int) c.highestValue[3], (int) c.highestValue[2] - (int) c.highestValue[3], (int) c.highestValue[3] * 2, (int) c.highestValue[3] * 2);
+		gsout.getBufferedImage().getGraphics().setColor(Color.BLUE);
+		gsout.getBufferedImage().getGraphics().drawOval((int) c.highestValue[1] - (int) c.highestValue[3], (int) c.highestValue[2] - (int) c.highestValue[3], (int) c.highestValue[3] * 2, (int) c.highestValue[3] * 2);
+		ImageIcon img = new ImageIcon(gs.getOriginalImage());
 		
 		JFrame frame = new JFrame("IMAGE");
 	      frame.setVisible(true);
@@ -60,38 +63,59 @@ public class CircleDetector {
 	}
 	
 	public double[][][] getHoughArray(double[][] sobelArray) {
+	
+		int smaller;
 		
-		double[][][] houghArray = new double[sobelArray.length][sobelArray[0].length][200];
+		if (sobelArray[0].length < sobelArray.length) {
+			smaller = sobelArray[0].length;
+		} else {
+			smaller = sobelArray.length;
+		}
+		
+		double[][][] houghArray = new double[sobelArray.length][sobelArray[0].length][smaller / 2];
 		
 		double a;
 		double b;
 		
 		highestValue[0] = 0;
 		
-		for (double y = 0; y < sobelArray[0].length - 10; y = y + 10) {
-			for (double x = 0; x < sobelArray.length - 10; x = x + 10) {
+		System.out.println(sobelArray[0].length);
+		System.out.println(sobelArray.length);
+		for (double y = 0; y < (sobelArray[0].length); y=y+1) {
+			for (double x = 0; x < sobelArray.length; x = x + 1) {
 				
 				if (sobelArray[(int) x][(int) y] != 0 ) {
 				
-					for (double r = 10; r < 100; r++) {
+					for (double r = smaller/20; r < smaller/2; r = r + 5) {
 					
-						for (double t = 0; t < 360; t = t + 10) {
-							a = x - r * Math.cos(t * Math.PI / 180); //polar coordinate for center
-							b = y - r * Math.sin(t * Math.PI /180);  //polar coordinate for center 
-							if ( a < 0 || a > 100) {
-								a = 0;
+						//for (double rr = r - 5; rr < r + 6; rr++) {
+						for (double t = 0; t < Math.PI * 2; t = t + 0.1) {
+							a = x - r * Math.cos(t ); //polar coordinate for center * Math.PI / 180
+							b = y - r * Math.sin(t );  //polar coordinate for center  * Math.PI /180
+							if ( a < 0) {
+								break;
 							}
-							if ( b < 0 || b > 100) {
-								b = 0;
+							if ( a > sobelArray.length - 1) {
+								break;
+								//a = sobelArray.length - 1;
+							}
+							if ( b < 0 ) {
+								break;
+							}
+							if (b > sobelArray[0].length - 1) {
+								break;
+								//b = sobelArray[0].length - 1;
 							}
 							houghArray[(int) a][(int) b][(int) r] += 1; //voting
 							if ( houghArray[(int) a][(int) b][(int) r] > highestValue[0] ) {
 								highestValue[0] = houghArray[(int) a][(int) b][(int) r];
+								//System.out.println(highestValue[0]);
 								highestValue[1] = a;
 								highestValue[2] = b;
 								highestValue[3] = r;
 							}
 						}
+						//}
 					
 					}
 				
