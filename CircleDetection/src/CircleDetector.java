@@ -61,7 +61,7 @@ public class CircleDetector {
 	
 	public double[][][] getHoughArray(double[][] sobelArray) {
 		
-		double[][][] houghArray = new double[sobelArray.length][sobelArray[0].length][1000];
+		double[][][] houghArray = new double[sobelArray.length][sobelArray[0].length][200];
 		
 		double a;
 		double b;
@@ -73,11 +73,17 @@ public class CircleDetector {
 				
 				if (sobelArray[(int) x][(int) y] != 0 ) {
 				
-					for (double r = 100; r < 200; r++) {
+					for (double r = 10; r < 100; r++) {
 					
 						for (double t = 0; t < 360; t = t + 10) {
 							a = x - r * Math.cos(t * Math.PI / 180); //polar coordinate for center
 							b = y - r * Math.sin(t * Math.PI /180);  //polar coordinate for center 
+							if ( a < 0 || a > 100) {
+								a = 0;
+							}
+							if ( b < 0 || b > 100) {
+								b = 0;
+							}
 							houghArray[(int) a][(int) b][(int) r] += 1; //voting
 							if ( houghArray[(int) a][(int) b][(int) r] > highestValue[0] ) {
 								highestValue[0] = houghArray[(int) a][(int) b][(int) r];
