@@ -1,4 +1,5 @@
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
@@ -18,13 +19,19 @@ public class GSImage {
 	private BufferedImage fullColour;
 	
 	public GSImage(BufferedImage image) {
-		fullColour = image;
-		convertToGreyScale(image);
+		Image scaled = image.getScaledInstance(-1, 200, Image.SCALE_SMOOTH);
+		  BufferedImage bufferedScaled = new BufferedImage(scaled.getWidth(null),  scaled.getHeight(null), BufferedImage.TYPE_INT_RGB);
+		  bufferedScaled.getGraphics().drawImage(scaled, 0, 0, null);
+		fullColour = bufferedScaled;
+		convertToGreyScale(bufferedScaled);
 	}
 	public GSImage(String filePath) throws IOException {
 		BufferedImage image = loadImageFromFile(filePath);
-		fullColour = image;
-		convertToGreyScale(image);
+		Image scaled = image.getScaledInstance(-1, 200, Image.SCALE_SMOOTH);
+		  BufferedImage bufferedScaled = new BufferedImage(scaled.getWidth(null),  scaled.getHeight(null), BufferedImage.TYPE_INT_RGB);
+		  bufferedScaled.getGraphics().drawImage(scaled, 0, 0, null);
+		fullColour = bufferedScaled;
+		convertToGreyScale(bufferedScaled);
 	}
 	public GSImage(double[][] greyScaleArray, int contrastMultiplier) {
 		BufferedImage image = new BufferedImage(greyScaleArray.length, greyScaleArray[0].length, BufferedImage.TYPE_BYTE_GRAY);
