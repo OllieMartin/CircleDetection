@@ -5,14 +5,13 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
-import com.github.sarxos.webcam.Webcam;
 
 /**
  * This class is the main class for the circle detection algorithm
@@ -47,13 +46,13 @@ public class CircleDetector {
 			System.err.println("Couldn't read file");
 		}
 		
-		EdgeDetector e = new EdgeDetector(200);
+		EdgeDetector e = new EdgeDetector(150);
 		CircleDetector c = new CircleDetector();
 		
 		double[][] sobelArray = e.getSobelFilteredArray(gs.getBufferedImage());
 		
 		ArrayList<Circle> circles = c.getHoughCircles(sobelArray);
-		GSImage gsout = new GSImage(e.getSobelFilteredArray(gs.getBufferedImage()),100);
+		GSImage gsout = new GSImage(e.getSobelFilteredArray(gs.getBufferedImage()),1000);
 		Graphics g = gs.getOriginalImage().getGraphics();
 		g.setColor(Color.BLUE);
 		for (Circle circle : circles) {
@@ -104,7 +103,7 @@ public class CircleDetector {
 				
 				if (sobelArray[(int) x][(int) y] != 0 ) {
 				
-					for (double r = smaller/10; r < smaller/2; r = r + 5) {
+					for (double r = smaller/2 - 1; r > smaller/12; r = r - 5) {
 					
 						for (double t = 0; t < Math.PI * 2; t = t + 0.1) {
 							a = x - r * Math.cos(t ); //polar coordinate for center * Math.PI / 180
@@ -123,8 +122,38 @@ public class CircleDetector {
 							}
 							houghArray[(int) a][(int) b][(int) r] += 1; //voting
 							total = total + 1;
-							if (houghArray[(int) a][(int) b][(int) r] > 30) {
-								circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+							if (houghArray[(int) a][(int) b][(int) r] > 20) {
+								
+								if (circles.size() == 0) {
+									circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+								} else {
+									Iterator<Circle> it = circles.iterator();
+									while (it.hasNext()) {
+										Circle c = it.next();
+										if (circles.size() < 10) {
+											if (c.x <= a + 10 && c.x >= a - 10  && c.y <= b + 10 && c.y >= b - 10) {
+												if (c.i < houghArray[(int) a][(int) b][(int) r]) {
+													circles.remove(c);
+													circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+												}
+											} else {
+												circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+											}
+											break;
+										}
+										if (houghArray[(int) a][(int) b][(int) r] > c.i) {
+											circles.remove(c);
+											circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+											break;
+										}
+									}
+								}
+								//circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+								//System.out.println(houghArray[(int) a][(int) b][(int) r]);
+								r = smaller/12;
+								break;
+								//t+=0.314;
+								
 							}
 							
 						}

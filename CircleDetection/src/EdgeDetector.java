@@ -55,6 +55,8 @@ public class EdgeDetector {
 	 */
 	public double[][] getSobelFilteredArray(double[][] inputArray, int width, int height) {
 		
+		inputArray = getGaussianFilteredArray(inputArray, width, height);
+		
 		double[][] outputArray = new double[width][height];
 		
 		double xValue;
@@ -85,6 +87,42 @@ public class EdgeDetector {
 					outputArray[x][y] = 0;
 				}
 				
+			}
+			
+		}
+		
+		return outputArray;
+	}
+	
+public double[][] getGaussianFilteredArray(double[][] inputArray, int width, int height) {
+		
+	double gaussian[][] = {{0.0126,0.0252,0.0314,0.0252,0.0126},
+		{0.0252,0.0566,0.0755,0.0566,0.0252},
+		{0.0314,0.0755,0.0943,0.0755,0.0314},
+		{0.0252,0.0566,0.0755,0.0566,0.0252},
+		{0.0126,0.0252,0.0314,0.0252,0.0126}};
+	
+		double[][] outputArray = new double[width][height];
+		
+		double value;
+		
+		for (int x = 2; x < width - 2; x++) {
+			
+			for (int y = 2 ; y < height - 2; y++) {
+				
+				value = 0;
+				
+				for (int xk = 4 ; xk >= 0 ; xk -- ) {
+					
+					for (int yk = 4 ; yk >= 0 ; yk -- ) {
+						
+						value = value + (gaussian[xk][yk] * inputArray[x + 2 - xk][y - 2 +yk]);
+						
+					}
+					
+				}
+				
+				outputArray[x][y] = value; //* Math.sqrt(xValue*xValue + yValue*yValue)/2 ;
 			}
 			
 		}
