@@ -1,8 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,21 +20,9 @@ import javax.swing.JPanel;
  */
 public class CircleDetector {
 	
-	double highestValue[]= new double[4];
-	
 	public static void main(String args[]) {
 		
-		//CircleDetector c = new CircleDetector();
-		//c.loadImageFromFile("C:\\Users\\Oliver\\Desktop\\300px-Valve_original_(1).PNG");
-		//c.loadImageFromFile("C:\\Users\\Oliver\\Desktop\\200px-Bikesgray.jpg");
-		//c.loadImageFromFile("C:\\Users\\Oliver\\Desktop\\s-l300.jpg");
-		
 		JFileChooser jfc = new JFileChooser("C:\\Users\\Oliver\\Desktop");
-		
-		double[][][] houghArray;
-		
-		//Webcam web = Webcam.getDefault();
-		//web.open();
 		
 		GSImage gs = null;
 		jfc.showOpenDialog(null);
@@ -52,16 +38,11 @@ public class CircleDetector {
 		double[][] sobelArray = e.getSobelFilteredArray(gs.getBufferedImage());
 		
 		ArrayList<Circle> circles = c.getHoughCircles(sobelArray);
-		GSImage gsout = new GSImage(e.getSobelFilteredArray(gs.getBufferedImage()),1000);
 		Graphics g = gs.getOriginalImage().getGraphics();
 		g.setColor(Color.BLUE);
 		for (Circle circle : circles) {
 			g.drawOval(circle.x - circle.r, circle.y - circle.r, circle.r * 2, circle.r * 2);
 		}
-		//g.drawOval((int) c.highestValue[1] - (int) c.highestValue[3], (int) c.highestValue[2] - (int) c.highestValue[3], (int) c.highestValue[3] * 2, (int) c.highestValue[3] * 2);
-		System.out.println(c.highestValue[0]);
-		gs.getBufferedImage().getGraphics().setColor(Color.BLUE);
-		gs.getBufferedImage().getGraphics().drawOval((int) c.highestValue[1] - (int) c.highestValue[3], (int) c.highestValue[2] - (int) c.highestValue[3], (int) c.highestValue[3] * 2, (int) c.highestValue[3] * 2);
 		ImageIcon img = new ImageIcon(gs.getOriginalImage());
 		
 		JFrame frame = new JFrame("IMAGE");
@@ -81,6 +62,9 @@ public class CircleDetector {
 		
 		int smaller;
 		
+		double high = 0;
+		double highr = 0;
+		
 		int total = 0;
 		
 		if (sobelArray[0].length < sobelArray.length) {
@@ -93,8 +77,6 @@ public class CircleDetector {
 		
 		double a;
 		double b;
-		
-		highestValue[0] = 0;
 		
 		System.out.println(sobelArray[0].length);
 		System.out.println(sobelArray.length);
@@ -109,50 +91,69 @@ public class CircleDetector {
 							a = x - r * Math.cos(t ); //polar coordinate for center * Math.PI / 180
 							b = y - r * Math.sin(t );  //polar coordinate for center  * Math.PI /180
 							if ( a < 0) {
-								break;
+								continue;
 							}
 							if ( a > sobelArray.length - 1) {
-								break;
+								continue;
 							}
 							if ( b < 0 ) {
-								break;
+								continue;
 							}
 							if (b > sobelArray[0].length - 1) {
-								break;
+								continue;
 							}
 							houghArray[(int) a][(int) b][(int) r] += 1; //voting
 							total = total + 1;
-							if (houghArray[(int) a][(int) b][(int) r] > 20) {
-								
+							ArrayList<Circle> toRemove = new ArrayList<Circle>();
+							if (houghArray[(int) a][(int) b][(int) r] > 20 && houghArray[(int) a][(int) b][(int) r] > high/1.75 && r > highr/2) {
+								int area =smaller/11;
 								if (circles.size() == 0) {
 									circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
 								} else {
 									Iterator<Circle> it = circles.iterator();
+									boolean broken = false;
+									Circle c;
 									while (it.hasNext()) {
-										Circle c = it.next();
-										if (circles.size() < 10) {
-											if (c.x <= a + 10 && c.x >= a - 10  && c.y <= b + 10 && c.y >= b - 10) {
-												if (c.i < houghArray[(int) a][(int) b][(int) r]) {
+										c = it.next();
+										if (c.i >= high/1.75 && c.r >= r/2) {
+											if (c.x <= a + area && c.x >= a - area  && c.y <= b + area && c.y >= b - area) {
+												if (c.i < houghArray[(int) a][(int) b][(int) r] || (c.i/1.5 < houghArray[(int) a][(int) b][(int) r] && r > c.r)) {
+													if (houghArray[(int) a][(int) b][(int) r] > high) {
+														high = houghArray[(int) a][(int) b][(int) r];
+													}
+													if (r > highr) {
+														highr = r;
+													}
 													circles.remove(c);
 													circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+													broken  =true;
+													break;
+												} else {
+													broken = true;
+													break;
 												}
-											} else {
-												circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
 											}
-											break;
-										}
-										if (houghArray[(int) a][(int) b][(int) r] > c.i) {
-											circles.remove(c);
-											circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
-											break;
+										} else {
+											toRemove.add(c);
 										}
 									}
+									if (!broken) {
+										circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
+										if (houghArray[(int) a][(int) b][(int) r] > high) {
+											high = houghArray[(int) a][(int) b][(int) r];
+										}
+										if (r > highr) {
+											highr = r;
+										}
+									} else {
+										broken = false;
+									}
+									for (Circle cr : toRemove) {
+										circles.remove(cr);
+									}
 								}
-								//circles.add(new Circle((int)a,(int)b,(int)r,houghArray[(int) a][(int) b][(int) r]));
-								//System.out.println(houghArray[(int) a][(int) b][(int) r]);
 								r = smaller/12;
 								break;
-								//t+=0.314;
 								
 							}
 							
