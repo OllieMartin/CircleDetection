@@ -1,6 +1,8 @@
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,22 +38,27 @@ public class CircleDetector {
 		CircleDetector c = new CircleDetector();
 		
 		double[][] sobelArray = e.getSobelFilteredArray(gs.getBufferedImage());
-		
+		GSImage gsout = new GSImage(sobelArray, 1000);
 		ArrayList<Circle> circles = c.getHoughCircles(sobelArray);
 		Graphics g = gs.getOriginalImage().getGraphics();
 		g.setColor(Color.BLUE);
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setStroke(new BasicStroke(5));
 		for (Circle circle : circles) {
-			g.drawOval(circle.x - circle.r, circle.y - circle.r, circle.r * 2, circle.r * 2);
+			g2.drawOval(circle.x - circle.r, circle.y - circle.r, circle.r * 2, circle.r * 2);
 		}
 		ImageIcon img = new ImageIcon(gs.getOriginalImage());
+		ImageIcon img2 = new ImageIcon(gsout.getBufferedImage());
 		
 		JFrame frame = new JFrame("IMAGE");
 	      frame.setVisible(true);
-	      frame.setSize(500,500);
+	      frame.setSize(750,750);
 	      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	      JLabel label = new JLabel("", img, JLabel.CENTER);
+	      JLabel label2 = new JLabel("", img2, JLabel.CENTER);
 	      JPanel panel = new JPanel(new BorderLayout());
-	      panel.add( label, BorderLayout.CENTER );
+	      panel.add( label, BorderLayout.EAST );
+	      panel.add( label2, BorderLayout.WEST );
 	      frame.add(panel);
 		
 	}
